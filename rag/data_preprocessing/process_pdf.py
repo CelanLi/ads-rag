@@ -1,6 +1,9 @@
 # rag/data_preprocessing/process_pdf.py
 # -----------------------------------
 # This module contains the functions for processing pdf data.
+#
+# usage:
+#     python -m rag.data_preprocessing.process_pdf
 # -----------------------------------
 
 import logging

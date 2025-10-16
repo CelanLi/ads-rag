@@ -1,6 +1,9 @@
 # # rag/data_preprocessing/process_img.py
 # -----------------------------------
 # This module contains the functions for processing image data.
+#
+# usage:
+#     python -m rag.data_preprocessing.process_img
 # -----------------------------------
 
 from pathlib import Path
