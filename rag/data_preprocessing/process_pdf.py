@@ -4,6 +4,7 @@
 # -----------------------------------
 
 import logging
+import re
 from pathlib import Path
 from io import BytesIO
 
@@ -27,11 +28,11 @@ class PDFProcessor:
                     blob = f.read()
 
                 if type == "plain":
-                    lines, outlines = PlainParser()(blob)
+                    text, outlines = PlainParser()(blob)
 
                 output_data = {
                     "filename": pdf_file.name,
-                    "lines": [line for line, _ in lines],
+                    "text": text,
                     "outlines": outlines
                 }
 
@@ -43,30 +44,61 @@ class PDFProcessor:
                 print(f"Failed to process {pdf_file.name}: {e}")
         
 class PlainParser:
+    def __init__(self):
+        self.outlines = []
+
+    def clean_text(self, text: str) -> str:
+        """Clean PDF text by fixing line breaks and hyphenations."""
+        # Remove hyphenation across line breaks
+        text = re.sub(r'(\w)-\n(\w)', r'\1\2', text)
+
+        # Replace single newlines (within paragraphs) with spaces
+        text = re.sub(r'(?<!\n)\n(?!\n)', ' ', text)
+
+        # Normalize multiple newlines to exactly two (paragraph breaks)
+        text = re.sub(r'\n{2,}', '\n\n', text)
+
+        # Remove excessive spaces
+        text = re.sub(r' +', ' ', text)
+
+        return text.strip()
+
     def __call__(self, filename, from_page=0, to_page=100000, **kwargs):
         self.outlines = []
         lines = []
+
         try:
+            # Read the PDF (string path or bytes)
             self.pdf = pdf2_read(filename if isinstance(filename, str) else BytesIO(filename))
+
+            # Extract text page by page
             for page in self.pdf.pages[from_page:to_page]:
-                lines.extend([t for t in page.extract_text().split("\n")])
+                page_text = page.extract_text() or ""
+                lines.append(page_text.strip())
 
-            outlines = self.pdf.outline
+            # Extract outlines (table of contents)
+            outlines = getattr(self.pdf, "outline", None)
+            if outlines:
+                def dfs(arr, depth):
+                    for a in arr:
+                        if isinstance(a, dict):
+                            title = a.get("/Title", "").strip()
+                            if title:
+                                self.outlines.append((title, depth))
+                        else:
+                            dfs(a, depth + 1)
+                dfs(outlines, 0)
+            else:
+                logging.warning("No outlines found")
 
-            def dfs(arr, depth):
-                for a in arr:
-                    if isinstance(a, dict):
-                        self.outlines.append((a["/Title"], depth))
-                        continue
-                    dfs(a, depth + 1)
+        except Exception as e:
+            logging.exception(f"PlainParser error: {e}")
 
-            dfs(outlines, 0)
-        except Exception:
-            logging.exception("Outlines exception")
-        if not self.outlines:
-            logging.warning("Miss outlines")
+        # Combine all lines and clean up text
+        raw_text = "\n".join(lines)
+        cleaned_text = self.clean_text(raw_text)
 
-        return [(line, "") for line in lines], self.outlines
+        return cleaned_text, self.outlines
 
     def crop(self, ck, need_position):
         raise NotImplementedError
