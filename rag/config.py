@@ -14,15 +14,15 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
 # 1. embedding model
-DEFAULT_EMBEDDING_MODEL = "text-embedding-3-small"
+DEFAULT_EMBEDDING_MODEL = "gemini-embedding-001"
 AVAILABLE_EMBEDDING_MODELS = {
-    "text-embedding-3-small": {"backend": "openai", "api_key": OPENAI_API_KEY}, # OpenAI
-    "text-embedding-3-large": {"backend": "openai", "api_key": OPENAI_API_KEY}, # OpenAI
-    "gemini-embedding-001": {"backend": "gemini", "api_key": GEMINI_API_KEY}, # Google
-    "Qwen3-Embedding-8B": {"backend": "open_source", "api_key": None}, # open source
-    "Qwen3-Embedding-4B": {"backend": "open_source", "api_key": None}, # open source
-    "all-MiniLM-L6-v2": {"backend": "open_source", "api_key": None}, # open source
-    "Linq-Embed-Mistral": {"backend": "open_source", "api_key": None}, # open source
+    "text-embedding-3-small": {"backend": "openai", "api_key": OPENAI_API_KEY, "vector_dim": 1536}, # OpenAI
+    "text-embedding-3-large": {"backend": "openai", "api_key": OPENAI_API_KEY, "vector_dim": 3072}, # OpenAI
+    "gemini-embedding-001": {"backend": "gemini", "api_key": GEMINI_API_KEY, "vector_dim": 3072}, # Google
+    "Qwen3-Embedding-8B": {"backend": "open_source", "api_key": None, "vector_dim": 1024}, # open source
+    "Qwen3-Embedding-4B": {"backend": "open_source", "api_key": None, "vector_dim": 512}, # open source
+    "all-MiniLM-L6-v2": {"backend": "open_source", "api_key": None, "vector_dim": 384}, # open source
+    "Linq-Embed-Mistral": {"backend": "open_source", "api_key": None, "vector_dim": 768}, # open source
 }
 
 # 2. LLM models
