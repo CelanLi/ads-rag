@@ -1,11 +1,11 @@
-# rag/embeddings/build_embeddings.py
+# rag/embeddings/embedding_manager.py
 # -----------------------------------
 # This module loads chunked data,
 # generates embeddings using the selected model (e.g. OpenAI or SentenceTransformers),
 # and saves them into a vector store (e.g. FAISS, Chroma, or local file).
 #
 # usage:
-#     python -m rag.embeddings.build_embeddings
+#     python -m rag.embeddings.embedding_manager
 # -----------------------------------
 
 import faiss
@@ -72,6 +72,23 @@ class EmbeddingManager:
         else:
             self.metadata = []
 
+    def _construct_metadata(self, text: str):
+        """Construct a metadata record for a chunk."""
+        metadata_record = {
+            "index": len(self.metadata),
+            "text": text,
+        }
+        return metadata_record
+
+    def _save_metadata(self):
+        """Save metadata to disk."""
+        export_json(output_dir=self.vector_store_dir, file_name=f"{self.embedding_model}_metadata", content=self.metadata)
+    
+    def _save_vector_store(self):
+        """Persist FAISS index to disk."""
+        index = faiss.write_index(self.index, str(self.vector_store_path))
+        return index
+    
     def embed_chunks(self, text: str | List[str]) -> Tuple[np.ndarray, int]:
         """Generate embeddings for one or more text chunks."""
         if isinstance(text, str):
@@ -96,18 +113,6 @@ class EmbeddingManager:
         self._save_metadata()
         print(f"Added {len(texts)} chunks to metadata. Total number of chunks is {len(self.metadata)}")
 
-    def _construct_metadata(self, text: str):
-        """Construct a metadata record for a chunk."""
-        metadata_record = {
-            "index": len(self.metadata),
-            "text": text,
-        }
-        return metadata_record
-
-    def _save_metadata(self):
-        """Save metadata to disk."""
-        export_json(output_dir=self.vector_store_dir, file_name=f"{self.embedding_model}_metadata", content=self.metadata)
-
     def search(self, query: str | List[str], top_k: int = 3):
         """Search similar chunks for a given query."""
         if isinstance(query, str):
@@ -123,13 +128,18 @@ class EmbeddingManager:
             metadata_list.append([self.metadata[index] for index in index_list])
         return distances, indices, metadata_list
 
-    def _save_vector_store(self):
-        """Persist FAISS index to disk."""
-        index = faiss.write_index(self.index, str(self.vector_store_path))
-        return index
+    def embed_all_chunks(self, chunks_dir: str = "data/chunks"):
+        "embed all chunks in the chunks_dir"
+        for chunk_file in Path(chunks_dir).glob("*.json"):
+            with open(chunk_file, "r", encoding="utf-8") as f:
+                chunk_data = json.load(f)
+                chunks = chunk_data.get("chunks", [])
+                self.add_embeddings(chunks)
+
 
 if __name__ == "__main__":
     embedding_manager = EmbeddingManager()
     # embedding_manager.add_embeddings(["Hello, world!", "Hello, universe!", "Hello, galaxy!", "The capital of France is Paris.", "The capital of Germany is Berlin.", "The capital of Italy is Rome.", "The capital of Spain is Madrid.", "The capital of Portugal is Lisbon.", "The capital of Greece is Athens.", "The capital of Turkey is Ankara."])
-    distances, indices, metadata = embedding_manager.search(["Berlin is my favorite city.", "Hello, Berlin."])
-    print(distances, indices, metadata)
+    # distances, indices, metadata = embedding_manager.search(["Berlin is my favorite city.", "Hello, Berlin."])
+    # print(distances, indices, metadata)
+    embedding_manager.embed_all_chunks()

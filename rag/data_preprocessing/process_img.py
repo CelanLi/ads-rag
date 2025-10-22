@@ -45,7 +45,7 @@ class ImgProcessor:
                     description = vlm_parser.generate_img_description(img_path=img_file)
 
                 # Use stem to avoid double extensions (e.g., image.png.txt)
-                export_txt(output_dir=output_dir, file_name=img_file.stem, content=description)
+                export_txt(output_dir=output_dir, file_name=img_file.name, content={"filename": img_file.name, "text": description})
 
                 print(f"Processed {img_file.name}")
 

@@ -71,11 +71,14 @@ class GeminiEmbeddingModel(BaseEmbeddingModel):
         self.model_name = model_name
 
     def encode(self, texts: List[str]) -> Tuple[np.ndarray, int]:
+        batch_size = AVAILABLE_EMBEDDING_MODELS[self.model_name]["batch_size"]
         total_tokens = 0
-        response = self.client.models.embed_content(model=self.model_name, contents=texts, config=types.EmbedContentConfig(task_type="SEMANTIC_SIMILARITY"))
-        result = np.array([np.array(e.values) for e in response.embeddings])
-        total_tokens += self.total_token_count(response)
-        return result, total_tokens
+        for i in range(0, len(texts), batch_size):
+            batch = texts[i:i + batch_size]
+            response = self.client.models.embed_content(model=self.model_name, contents=batch, config=types.EmbedContentConfig(task_type="SEMANTIC_SIMILARITY"))
+            result = np.array([np.array(e.values) for e in response.embeddings])
+            total_tokens += self.total_token_count(response)
+            return result, total_tokens
 
     def encode_queries(self, text: str) -> np.ndarray:
         if isinstance(text, str):

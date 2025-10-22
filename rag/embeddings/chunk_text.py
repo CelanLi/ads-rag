@@ -7,29 +7,40 @@
 # -----------------------------------
 
 import json
+from pathlib import Path
 from typing import List
+from pydantic import BaseModel
 from rag.config import DEFAULT_CHUNK_SIZE, DEFAULT_OVERLAP
 from utils.file_utils import export_json
 
+class ChunkMetadata(BaseModel):
+    filename: str
+    chunks: List[str]
+
 class TextChunker:
-    def __init__(self, text: str | dict, chunk_size: int = DEFAULT_CHUNK_SIZE, overlap: int = DEFAULT_OVERLAP):
-        if isinstance(text, str):
-            self.text = text
-        elif isinstance(text, dict):
-            self.text = text.get("text", "")
-        else:
-            raise ValueError(f"Invalid text type: {type(text)}. Expected str or dict.")
+    def __init__(self, chunk_size: int = DEFAULT_CHUNK_SIZE, overlap: int = DEFAULT_OVERLAP):
         self.chunk_size = chunk_size
         self.overlap = overlap
 
-    def __call__(self):
-        return self.chunk_text()
-
-    def chunk_text(self) -> List[str]:
+    def chunk_text(self, text: str) -> List[str]:
         chunks = []
-        for i in range(0, len(self.text), self.chunk_size - self.overlap):
-            chunks.append(self.text[i:i + self.chunk_size])
+        for i in range(0, len(text), self.chunk_size - self.overlap):
+            chunks.append(text[i:i + self.chunk_size])
         return chunks
+
+    def chunk_all_text(self, input_dir: str = "data/processed", output_dir: str = "data/chunks"):
+        "chunk all sub directories in the input_dir and save the chunks in output dir"
+        input_path = Path(input_dir)
+        output_path = Path(output_dir)
+        output_path.mkdir(parents=True, exist_ok=True)
+        for sub_dir in input_path.glob("**/*.json"):
+            with open(sub_dir, "r", encoding="utf-8") as f:
+                text_dict = json.load(f)
+                text = text_dict.get("text", "")
+                filename = sub_dir.stem
+                chunks = self.chunk_text(text)
+                chunk_metadata = ChunkMetadata(filename=filename, chunks=chunks)
+                export_json(output_dir=output_dir, file_name=filename, content=chunk_metadata.model_dump())
 
 if __name__ == "__main__":
     # text_str = "This is a test text to chunk. It is a long text that needs to be chunked into smaller pieces. This is a test text to chunk. It is a long text that needs to be chunked into smaller pieces. This is a test text to chunk. It is a long text that needs to be chunked into smaller pieces. This is a test text to chunk. It is a long text that needs to be chunked into smaller pieces. This is a test text to chunk. It is a long text that needs to be chunked into smaller pieces. This is a test text to chunk. It is a long text that needs to be chunked into smaller pieces. This is a test text to chunk. It is a long text that needs to be chunked into smaller pieces. This is a test text to chunk. It is a long text that needs to be chunked into smaller pieces."
@@ -47,10 +58,11 @@ if __name__ == "__main__":
     #         {"title": "Subsection 2.1.2", "depth": 3},
     #     ]
     # }
-    text_file_path = "data/processed/pdf/BIM Model Cheking Method.pdf.json"
-    with open(text_file_path, "r", encoding="utf-8") as f:
-        text_dict = json.load(f)
-    chunker = TextChunker(text_dict)
-    chunks = chunker()
-    export_json(output_dir="data/chunks/pdf", file_name="BIM Model Cheking Method.pdf.chunks", content={"chunks": chunks})
-    
+    # text_file_path = "data/processed/pdf/BIM Model Cheking Method.pdf.json"
+    # with open(text_file_path, "r", encoding="utf-8") as f:
+    #     text_dict = json.load(f)
+    # chunker = TextChunker(text_dict)
+    # chunks = chunker()
+    # export_json(output_dir="data/chunks/pdf", file_name="BIM Model Cheking Method.pdf.chunks", content={"chunks": chunks})
+    chunker = TextChunker()
+    chunker.chunk_all_text()
