@@ -30,6 +30,7 @@ DEFAULT_LLM_MODEL = "gemini-2.5-flash"
 AVAILABLE_LLMS = {
     "gpt-4.1-mini": {"backend": "openai", "api_key": OPENAI_API_KEY},
     "gemini-2.5-flash": {"backend": "gemini", "api_key": GEMINI_API_KEY},
+    "gemini-2.5-pro": {"backend": "gemini", "api_key": GEMINI_API_KEY},
 }
 
 # 3. chunk settings

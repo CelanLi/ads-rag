@@ -11,7 +11,7 @@
 import faiss
 from pathlib import Path
 import logging
-from typing import List, Tuple
+from typing import Dict, List, Tuple
 import numpy as np
 import json
 
@@ -113,7 +113,7 @@ class EmbeddingManager:
         self._save_metadata()
         print(f"Added {len(texts)} chunks to metadata. Total number of chunks is {len(self.metadata)}")
 
-    def search(self, query: str | List[str], top_k: int = 3):
+    def search(self, query: str | List[str], top_k: int = 3) -> Tuple[np.ndarray, np.ndarray, List[List[Dict]]]:
         """Search similar chunks for a given query."""
         if isinstance(query, str):
             query = [query]

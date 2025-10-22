@@ -14,7 +14,7 @@ class Retriever:
     def __init__(self, embedding_manager: EmbeddingManager):
         self.embedding_manager = embedding_manager
 
-    def retrieve(self, query: str, top_k: int = 3) -> str:
+    def retrieve(self, query: str, top_k: int = 3) -> List[List[Dict]]:
         "retrieve the most similar chunks"
         _, _, metadata = self.embedding_manager.search(query, top_k)
         return metadata
