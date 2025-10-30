@@ -8,9 +8,8 @@
 
 from pathlib import Path
 
-from rag.vlm.vlm_client import VLMClient
-from rag.config import DEFAULT_LLM_MODEL
-from utils.file_utils import export_txt
+from rag.data_preprocessing.vlm_textgen import VLMGenerator
+from utils.file_utils import export_json
 
 class ImgProcessor:
     def __init__(self):
@@ -39,34 +38,18 @@ class ImgProcessor:
             return
 
         for img_file in img_files:
-            try:
-                if type == "vlm_description":
-                    vlm_parser = VLMParser()
-                    description = vlm_parser.generate_img_description(img_path=img_file)
+            self.process_img(img_file=img_file, type=type, output_dir=output_dir)
 
-                # Use stem to avoid double extensions (e.g., image.png.txt)
-                export_txt(output_dir=output_dir, file_name=img_file.name, content={"filename": img_file.name, "text": description})
+    def process_img(self, img_file: str, type: str = "vlm_description", output_dir: str = "data/processed/img/"):
+        try:
+            if type == "vlm_description":
+                vlm_generator = VLMGenerator()
+                description = vlm_generator.generate_img_description(img_path=img_file)
+            export_json(output_dir=output_dir, file_name=img_file.name, content={"filename": img_file.name, "text": description})
+            print(f"Processed {img_file.name}")
+        except Exception as e:
+            print(f"Failed to process {img_file.name}: {e}")
 
-                print(f"Processed {img_file.name}")
-
-            except Exception as e:
-                print(f"Failed to process {img_file.name}: {e}")
-
-class VLMParser:
-    def __init__(self):
-        pass
-
-    def generate_img_description(self, img_path: str, ):
-        # put the image into the vlm to generate the description, then save the description a text file
-        vlm_client = VLMClient(model_name=DEFAULT_LLM_MODEL)
-        prompt = vlm_client.load_prompt("rag/prompts/vlm_img_description.md")
-        response = vlm_client.generate_img_description(img_path, prompt)
-        return response
-
-
-    def get_img_representation(self, img_path: str):
-        # use some cv methods to get the representations
-        pass
 
 if __name__ == "__main__":
     img_processor = ImgProcessor()
