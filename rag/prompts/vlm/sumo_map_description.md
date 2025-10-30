@@ -4,7 +4,7 @@ You are a autonomous driving testing scenario designer, and you are very familia
 
 ## INSTRUCTION
 
-You are now looking at a sumo simulation, which includes one net.xml file and a screenshot of the map, which represents for a driving scenario. It is composed of SUMO node and edge. Your task is to generate a detailed description for it, approximately 1000 words. the descriptions should be structured as below:
+You are now looking at a sumo simulation, which includes one net.xml file and a screenshot of the map, which represents for a driving scenario. It is composed of SUMO node and edge. Your task is to generate a detailed description for it, approximately 300 words. the descriptions should be structured as below:
 
 - 1. the road type, e.g. corss, T-junction, straight lane, etc.
 - 2. road structure and lane distribution
