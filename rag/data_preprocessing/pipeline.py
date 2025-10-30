@@ -7,15 +7,33 @@
 #     python -m rag.data_preprocessing.pipeline
 # -----------------------------------
 
-from rag.data_preprocessing.process_pdf import PDFProcessor
-from rag.data_preprocessing.process_img import ImgProcessor
+from typing import List
 
-def process_all_raw_data(input_dir: str = "data/raw/", output_dir: str = "data/processed/"):
-    pdf_processor = PDFProcessor()
-    pdf_processor.process_pdfs()
+from pydantic import BaseModel
 
-    img_processor = ImgProcessor()
-    img_processor.process_imgs()
 
-if __name__ == "__main__":
-    process_all_raw_data()
+class ProcessedData(BaseModel):
+    filename: str
+    src_path: List[str]
+    text: str
+
+    def model_dump(self) -> dict:
+        return {
+            "filename": self.filename,
+            "src_path": self.src_path,
+            "text": self.text,
+        }
+
+
+# def process_all_raw_data(
+#     input_dir: str = "data/raw/", output_dir: str = "data/processed/"
+# ):
+#     pdf_processor = PDFProcessor()
+#     pdf_processor.process_pdfs()
+
+#     img_processor = ImgProcessor()
+#     img_processor.process_imgs()
+
+
+# if __name__ == "__main__":
+#     process_all_raw_data()

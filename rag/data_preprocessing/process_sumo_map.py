@@ -2,6 +2,7 @@ import os
 from pathlib import Path
 
 from rag.config import DEFAULT_VISION_MODEL
+from rag.data_preprocessing.pipeline import ProcessedData
 from rag.llm.vision_models import get_vision_model
 from utils.file_utils import export_json
 
@@ -57,14 +58,15 @@ class SumoMapProcessor:
             img_path=map_img_file,
             xml_path=map_xml_file,
         )
+        output_data = ProcessedData(
+            filename=map_img_file.name,
+            text=description,
+            src_path=[str(map_img_file), str(map_xml_file)],
+        )
         export_json(
             output_dir=output_dir,
             file_name=map_img_file.name,
-            content={
-                "filename": map_img_file.name,
-                "text": description,
-                "src_path": [str(map_img_file), str(map_xml_file)],
-            },
+            content=output_data.model_dump(),
         )
 
 

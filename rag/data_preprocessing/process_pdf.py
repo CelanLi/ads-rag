@@ -12,6 +12,7 @@ from pathlib import Path
 from io import BytesIO
 
 from pypdf import PdfReader as pdf2_read
+from rag.data_preprocessing.pipeline import ProcessedData
 from utils.file_utils import export_json
 
 
@@ -37,15 +38,15 @@ class PDFProcessor:
                 if type == "plain":
                     text, outlines = PlainParser()(blob)
 
-                output_data = {
-                    "filename": pdf_file.name,
-                    "text": text,
-                    "outlines": outlines,
-                    "src_path": [str(pdf_file)],
-                }
-
+                output_data = ProcessedData(
+                    filename=pdf_file.name,
+                    text=text,
+                    src_path=[str(pdf_file)],
+                )
                 export_json(
-                    output_dir=output_dir, file_name=pdf_file.name, content=output_data
+                    output_dir=output_dir,
+                    file_name=pdf_file.name,
+                    content=output_data.model_dump(),
                 )
 
                 print(f"Processed {pdf_file.name}")

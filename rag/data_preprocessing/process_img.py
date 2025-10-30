@@ -9,6 +9,7 @@
 from pathlib import Path
 
 from rag.config import DEFAULT_VISION_MODEL
+from rag.data_preprocessing.pipeline import ProcessedData
 from rag.llm.vision_models import get_vision_model
 from utils.file_utils import export_json
 
@@ -60,14 +61,16 @@ class ImgProcessor:
             if type == "vlm_description":
                 vlm = get_vision_model(model_name=DEFAULT_VISION_MODEL)
                 description = vlm.generate_img_description(img_path=img_file)
+
+            output_data = ProcessedData(
+                filename=img_file.name,
+                text=description,
+                src_path=[str(img_file)],
+            )
             export_json(
                 output_dir=output_dir,
                 file_name=img_file.name,
-                content={
-                    "filename": img_file.name,
-                    "text": description,
-                    "src_path": [str(img_file)],
-                },
+                content=output_data.model_dump(),
             )
             print(f"Processed {img_file.name}")
         except Exception as e:

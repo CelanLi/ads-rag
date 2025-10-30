@@ -140,12 +140,12 @@ class EmbeddingManager:
 
     def add_embeddings(self, chunk_data: ChunkMetadata):
         """Embed and add text chunks to FAISS vector store."""
-        # embeddings, total_tokens = self.embed_chunks(chunk_data.chunks)
-        # self.index.add(embeddings)
-        # self._save_vector_store()
-        # print(
-        #     f"Added {len(chunk_data.chunks)} chunks to FAISS index. Used {total_tokens} tokens."
-        # )
+        embeddings, total_tokens = self.embed_chunks(chunk_data.chunks)
+        self.index.add(embeddings)
+        self._save_vector_store()
+        print(
+            f"Added {len(chunk_data.chunks)} chunks to FAISS index. Used {total_tokens} tokens."
+        )
 
         self._construct_metadata(chunk_data)
         self._save_metadata()
