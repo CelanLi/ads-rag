@@ -62,6 +62,7 @@ class SumoMapProcessor:
             filename=map_img_file.name,
             text=description,
             src_path=[str(map_img_file), str(map_xml_file)],
+            category="sumo-scenario",
         )
         export_json(
             output_dir=output_dir,

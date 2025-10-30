@@ -1,12 +1,15 @@
 from abc import ABC
 from pathlib import Path
-from typing import List
+from typing import Dict, List
 
 from google import genai
 from openai import OpenAI
 from langchain.prompts import PromptTemplate
 
 from rag.config import AVAILABLE_LLMS
+
+RAG_QA_PROMPT_PATH = "rag/prompts/llm/rag_qa.md"
+ADS_RAG_PROMPT_PATH = "rag/prompts/llm/ads_rag.md"
 
 
 class BaseLLMModel(ABC):
@@ -34,9 +37,26 @@ class BaseLLMModel(ABC):
         return path.read_text(encoding="utf-8")
 
     def generate_rag_response(
-        self, prompt_template_path: str, context: List[str], question: str
+        self,
+        context: List[str],
+        question: str,
+        prompt_template_path: str = RAG_QA_PROMPT_PATH,
     ) -> str:
+        """
+        Generate a response for a given context and question.
+        """
         raise NotImplementedError("Please implement generate_response method!")
+
+    def generate_ads_rag_response(
+        self,
+        context: List[Dict],
+        query: str,
+        prompt_template_path: str = ADS_RAG_PROMPT_PATH,
+    ) -> str:
+        """
+        Generate an autonomous driving scenario with the given requirements and xml as reference.
+        """
+        raise NotImplementedError("Please implement generate_ads_rag_response method!")
 
 
 class OpenAILLMModel(BaseLLMModel):
@@ -45,7 +65,10 @@ class OpenAILLMModel(BaseLLMModel):
         self.client = OpenAI(api_key=api_key)
 
     def generate_rag_response(
-        self, prompt_template_path: str, context: List[str], question: str
+        self,
+        context: List[str],
+        question: str,
+        prompt_template_path: str = RAG_QA_PROMPT_PATH,
     ) -> str:
         prompt_str = self.get_prompt(prompt_template_path)
         prompt_template = PromptTemplate(
@@ -68,6 +91,14 @@ class OpenAILLMModel(BaseLLMModel):
         )
         return response.choices[0].message.content.strip()
 
+    def generate_ads_rag_response(
+        self,
+        context: List[str],
+        query: str,
+        prompt_template_path: str = ADS_RAG_PROMPT_PATH,
+    ) -> str:
+        pass
+
 
 class GeminiLLMModel(BaseLLMModel):
     def __init__(self, model_name: str, api_key: str, **kwargs):
@@ -75,7 +106,10 @@ class GeminiLLMModel(BaseLLMModel):
         self.client = genai.Client(api_key=api_key)
 
     def generate_rag_response(
-        self, prompt_template_path: str, context: List[str], question: str
+        self,
+        context: List[str],
+        question: str,
+        prompt_template_path: str = RAG_QA_PROMPT_PATH,
     ) -> str:
         prompt_str = self.get_prompt(prompt_template_path)
         prompt_template = PromptTemplate(
@@ -97,6 +131,41 @@ class GeminiLLMModel(BaseLLMModel):
             model=self.model_name, contents=[formatted_prompt]
         )
         return response.text
+
+    def generate_ads_rag_response(
+        self,
+        contexts: List[str],
+        query: str,
+        prompt_template_path: str = ADS_RAG_PROMPT_PATH,
+    ) -> str:
+        # filter contexts
+        contexts = [c for c in contexts if c.get("category") == "sumo-scenario"]
+
+        # collect unique xml paths
+        xml_paths: set[str] = set()
+        for context in contexts:
+            for path in context.get("src_path", []):
+                if path.lower().endswith(".xml"):
+                    xml_paths.add(path)
+
+        # read and combine xml content
+        xml_content = "\n".join(
+            Path(path).read_text(encoding="utf-8")
+            for path in xml_paths
+            if Path(path).is_file()
+        )
+
+        # generate prompt
+        prompt_template = self.get_prompt(prompt_template_path)
+        prompt_template = PromptTemplate(
+            input_variables=["context", "query"], template=prompt_template
+        )
+        formatted_prompt = prompt_template.format(context=xml_content, query=query)
+        response = self.client.models.generate_content(
+            model=self.model_name, contents=[formatted_prompt]
+        ).text
+
+        return response
 
 
 def get_llm_model(model_name: str) -> BaseLLMModel:

@@ -16,12 +16,14 @@ class ProcessedData(BaseModel):
     filename: str
     src_path: List[str]
     text: str
+    category: str
 
     def model_dump(self) -> dict:
         return {
             "filename": self.filename,
             "src_path": self.src_path,
             "text": self.text,
+            "category": self.category,
         }
 
 

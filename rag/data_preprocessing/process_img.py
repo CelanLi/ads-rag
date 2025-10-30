@@ -66,6 +66,7 @@ class ImgProcessor:
                 filename=img_file.name,
                 text=description,
                 src_path=[str(img_file)],
+                category="img",
             )
             export_json(
                 output_dir=output_dir,

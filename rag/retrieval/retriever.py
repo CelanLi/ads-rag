@@ -10,11 +10,12 @@
 from typing import Dict, List
 from rag.embeddings.embedding_manager import EmbeddingManager
 
+
 class Retriever:
     def __init__(self, embedding_manager: EmbeddingManager):
         self.embedding_manager = embedding_manager
 
-    def retrieve(self, query: str, top_k: int = 3) -> List[List[Dict]]:
+    def retrieve(self, query: str | List[str], top_k: int = 3) -> List[List[Dict]]:
         "retrieve the most similar chunks"
         _, _, metadata = self.embedding_manager.search(query, top_k)
         return metadata
@@ -25,6 +26,11 @@ class Retriever:
     def get_context(self, metadata: List[Dict]) -> str:
         pass
 
+
 if __name__ == "__main__":
     retriever = Retriever(EmbeddingManager())
-    print(retriever.retrieve("What is the usage of diffusion model in autonomous driving?"))
+    print(
+        retriever.retrieve(
+            "What is the usage of diffusion model in autonomous driving?"
+        )
+    )

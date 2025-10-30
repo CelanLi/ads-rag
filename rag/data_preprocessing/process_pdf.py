@@ -42,6 +42,7 @@ class PDFProcessor:
                     filename=pdf_file.name,
                     text=text,
                     src_path=[str(pdf_file)],
+                    category="pdf",
                 )
                 export_json(
                     output_dir=output_dir,

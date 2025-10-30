@@ -27,12 +27,14 @@ class EmbeddingMetadata(BaseModel):
     text: str
     src_path: List[str]
     index: int
+    category: str
 
     def model_dump(self) -> dict:
         return {
             "text": self.text,
             "src_path": self.src_path,
             "index": self.index,
+            "category": self.category,
         }
 
 
@@ -111,7 +113,10 @@ class EmbeddingManager:
         """Construct a metadata record for a chunk."""
         for chunk in chunk_data.chunks:
             chunk_data = EmbeddingMetadata(
-                text=chunk, src_path=chunk_data.src_path, index=len(self.metadata)
+                text=chunk,
+                src_path=chunk_data.src_path,
+                index=len(self.metadata),
+                category=chunk_data.category,
             )
             self.metadata.append(chunk_data.model_dump())
 

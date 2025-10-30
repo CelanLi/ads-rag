@@ -18,12 +18,14 @@ class ChunkMetadata(BaseModel):
     filename: str
     chunks: List[str]
     src_path: List[str]
+    category: str
 
     def model_dump(self) -> dict:
         return {
             "filename": self.filename,
             "chunks": self.chunks,
             "src_path": self.src_path,
+            "category": self.category,
         }
 
 
@@ -57,6 +59,7 @@ class TextChunker:
                     filename=filename,
                     chunks=chunks,
                     src_path=text_dict.get("src_path", []),
+                    category=text_dict.get("category", "unknown"),
                 )
                 export_json(
                     output_dir=output_dir,
