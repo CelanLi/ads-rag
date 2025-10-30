@@ -4,7 +4,7 @@ You are a professional autonomous driving testing scenario designer.
 
 ## INSTRUCTION
 
-Now you have to design a SUMO autonomous driving scenario with the following requirements: {query}. Here is a similar scenario for you to take a reference: {context}. Please make some minor changes on it to make a similar scenario.
+Now you have to design a SUMO autonomous driving scenario with the following requirements: {query}. Here is a similar scenario for you to take a reference: {context}. Please make changes on it to make a similar scenario. You can add, delete, update all the nodes and edges as you want, but you need to match to the requirements above.
 
 When you are generating the result, please think step by step as below:
 
