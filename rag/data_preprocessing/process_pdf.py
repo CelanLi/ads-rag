@@ -14,13 +14,17 @@ from io import BytesIO
 from pypdf import PdfReader as pdf2_read
 from utils.file_utils import export_json
 
+
 class PDFProcessor:
     def __init__(self):
         pass
 
-    def process_pdfs(self, input_dir: str = "data/raw/pdf/", 
-                    output_dir: str = "data/processed/pdf/", 
-                    type: str = "plain"):
+    def process_pdfs(
+        self,
+        input_dir: str = "data/raw/pdf/",
+        output_dir: str = "data/processed/pdf/",
+        type: str = "plain",
+    ):
         input_path = Path(input_dir)
         output_path = Path(output_dir)
         output_path.mkdir(parents=True, exist_ok=True)
@@ -36,16 +40,20 @@ class PDFProcessor:
                 output_data = {
                     "filename": pdf_file.name,
                     "text": text,
-                    "outlines": outlines
+                    "outlines": outlines,
+                    "src_path": [str(pdf_file)],
                 }
 
-                export_json(output_dir=output_dir, file_name=pdf_file.name, content=output_data)
+                export_json(
+                    output_dir=output_dir, file_name=pdf_file.name, content=output_data
+                )
 
                 print(f"Processed {pdf_file.name}")
 
             except Exception as e:
                 print(f"Failed to process {pdf_file.name}: {e}")
-        
+
+
 class PlainParser:
     def __init__(self):
         self.outlines = []
@@ -53,16 +61,16 @@ class PlainParser:
     def clean_text(self, text: str) -> str:
         """Clean PDF text by fixing line breaks and hyphenations."""
         # Remove hyphenation across line breaks
-        text = re.sub(r'(\w)-\n(\w)', r'\1\2', text)
+        text = re.sub(r"(\w)-\n(\w)", r"\1\2", text)
 
         # Replace single newlines (within paragraphs) with spaces
-        text = re.sub(r'(?<!\n)\n(?!\n)', ' ', text)
+        text = re.sub(r"(?<!\n)\n(?!\n)", " ", text)
 
         # Normalize multiple newlines to exactly two (paragraph breaks)
-        text = re.sub(r'\n{2,}', '\n\n', text)
+        text = re.sub(r"\n{2,}", "\n\n", text)
 
         # Remove excessive spaces
-        text = re.sub(r' +', ' ', text)
+        text = re.sub(r" +", " ", text)
 
         return text.strip()
 
@@ -72,7 +80,9 @@ class PlainParser:
 
         try:
             # Read the PDF (string path or bytes)
-            self.pdf = pdf2_read(filename if isinstance(filename, str) else BytesIO(filename))
+            self.pdf = pdf2_read(
+                filename if isinstance(filename, str) else BytesIO(filename)
+            )
 
             # Extract text page by page
             for page in self.pdf.pages[from_page:to_page]:
@@ -82,6 +92,7 @@ class PlainParser:
             # Extract outlines (table of contents)
             outlines = getattr(self.pdf, "outline", None)
             if outlines:
+
                 def dfs(arr, depth):
                     for a in arr:
                         if isinstance(a, dict):
@@ -90,6 +101,7 @@ class PlainParser:
                                 self.outlines.append((title, depth))
                         else:
                             dfs(a, depth + 1)
+
                 dfs(outlines, 0)
             else:
                 logging.warning("No outlines found")
@@ -110,16 +122,17 @@ class PlainParser:
     def remove_tag(txt):
         raise NotImplementedError
 
+
 class DeepDocParser:
     pass
+
 
 class VisionParser:
     pass
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     processor = PDFProcessor()
     processor.process_pdfs(
-        input_dir="data/raw/pdf/",
-        output_dir="data/processed/pdf/",
-        type="plain"
+        input_dir="data/raw/pdf/", output_dir="data/processed/pdf/", type="plain"
     )

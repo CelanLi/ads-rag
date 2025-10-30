@@ -8,7 +8,7 @@ from utils.file_utils import export_json
 
 SUMO_MAP_FILE_NAME = "*.net.xml"  # the map file
 SUMO_ROUTE_FILE_NAME = "*.rou.xml"  # the trip file
-MAP_IMG_NAME = "map.png"  # the screenshot of the map
+MAP_IMG_NAME = "*.png"  # the screenshot of the map
 
 
 class SumoMapProcessor:
@@ -26,7 +26,12 @@ class SumoMapProcessor:
 
         for scenario_dir in input_path.iterdir():
             if scenario_dir.is_dir():
-                map_img_file = scenario_dir / MAP_IMG_NAME
+                map_img_files = list[Path](scenario_dir.glob(MAP_IMG_NAME))
+                if map_img_files:
+                    map_img_file = map_img_files[0]
+                    print("Found map image:", map_img_file)
+                else:
+                    print("No map image found in:", scenario_dir)
 
                 # find the first .net.xml file that matches
                 matches = list[Path](scenario_dir.glob(SUMO_MAP_FILE_NAME))
@@ -55,7 +60,11 @@ class SumoMapProcessor:
         export_json(
             output_dir=output_dir,
             file_name=map_img_file.name,
-            content={"filename": map_img_file.name, "text": description},
+            content={
+                "filename": map_img_file.name,
+                "text": description,
+                "src_path": [str(map_img_file), str(map_xml_file)],
+            },
         )
 
 

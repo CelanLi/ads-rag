@@ -63,7 +63,11 @@ class ImgProcessor:
             export_json(
                 output_dir=output_dir,
                 file_name=img_file.name,
-                content={"filename": img_file.name, "text": description},
+                content={
+                    "filename": img_file.name,
+                    "text": description,
+                    "src_path": [str(img_file)],
+                },
             )
             print(f"Processed {img_file.name}")
         except Exception as e:

@@ -13,22 +13,36 @@ from pydantic import BaseModel
 from rag.config import DEFAULT_CHUNK_SIZE, DEFAULT_OVERLAP
 from utils.file_utils import export_json
 
+
 class ChunkMetadata(BaseModel):
     filename: str
     chunks: List[str]
+    src_path: List[str]
+
+    def model_dump(self) -> dict:
+        return {
+            "filename": self.filename,
+            "chunks": self.chunks,
+            "src_path": self.src_path,
+        }
+
 
 class TextChunker:
-    def __init__(self, chunk_size: int = DEFAULT_CHUNK_SIZE, overlap: int = DEFAULT_OVERLAP):
+    def __init__(
+        self, chunk_size: int = DEFAULT_CHUNK_SIZE, overlap: int = DEFAULT_OVERLAP
+    ):
         self.chunk_size = chunk_size
         self.overlap = overlap
 
     def chunk_text(self, text: str) -> List[str]:
         chunks = []
         for i in range(0, len(text), self.chunk_size - self.overlap):
-            chunks.append(text[i:i + self.chunk_size])
+            chunks.append(text[i : i + self.chunk_size])
         return chunks
 
-    def chunk_all_text(self, input_dir: str = "data/processed", output_dir: str = "data/chunks"):
+    def chunk_all_text(
+        self, input_dir: str = "data/processed", output_dir: str = "data/chunks"
+    ):
         "chunk all sub directories in the input_dir and save the chunks in output dir"
         input_path = Path(input_dir)
         output_path = Path(output_dir)
@@ -39,8 +53,17 @@ class TextChunker:
                 text = text_dict.get("text", "")
                 filename = sub_dir.stem
                 chunks = self.chunk_text(text)
-                chunk_metadata = ChunkMetadata(filename=filename, chunks=chunks)
-                export_json(output_dir=output_dir, file_name=filename, content=chunk_metadata.model_dump())
+                chunk_metadata = ChunkMetadata(
+                    filename=filename,
+                    chunks=chunks,
+                    src_path=text_dict.get("src_path", []),
+                )
+                export_json(
+                    output_dir=output_dir,
+                    file_name=filename,
+                    content=chunk_metadata.model_dump(),
+                )
+
 
 if __name__ == "__main__":
     # text_str = "This is a test text to chunk. It is a long text that needs to be chunked into smaller pieces. This is a test text to chunk. It is a long text that needs to be chunked into smaller pieces. This is a test text to chunk. It is a long text that needs to be chunked into smaller pieces. This is a test text to chunk. It is a long text that needs to be chunked into smaller pieces. This is a test text to chunk. It is a long text that needs to be chunked into smaller pieces. This is a test text to chunk. It is a long text that needs to be chunked into smaller pieces. This is a test text to chunk. It is a long text that needs to be chunked into smaller pieces. This is a test text to chunk. It is a long text that needs to be chunked into smaller pieces."

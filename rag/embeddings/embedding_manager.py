@@ -15,9 +15,25 @@ from typing import Dict, List, Tuple
 import numpy as np
 import json
 
+from pydantic import BaseModel
+
 from rag.config import AVAILABLE_EMBEDDING_MODELS, DEFAULT_EMBEDDING_MODEL
+from rag.embeddings.chunk_text import ChunkMetadata
 from rag.llm.embedding_models import get_embedding_model
 from utils.file_utils import export_json
+
+
+class EmbeddingMetadata(BaseModel):
+    text: str
+    src_path: List[str]
+    index: int
+
+    def model_dump(self) -> dict:
+        return {
+            "text": self.text,
+            "src_path": self.src_path,
+            "index": self.index,
+        }
 
 
 class EmbeddingManager:
@@ -91,13 +107,13 @@ class EmbeddingManager:
         else:
             self.metadata = []
 
-    def _construct_metadata(self, text: str):
+    def _construct_metadata(self, chunk_data: ChunkMetadata):
         """Construct a metadata record for a chunk."""
-        metadata_record = {
-            "index": len(self.metadata),
-            "text": text,
-        }
-        return metadata_record
+        for chunk in chunk_data.chunks:
+            chunk_data = EmbeddingMetadata(
+                text=chunk, src_path=chunk_data.src_path, index=len(self.metadata)
+            )
+            self.metadata.append(chunk_data.model_dump())
 
     def _save_metadata(self):
         """Save metadata to disk."""
@@ -122,20 +138,19 @@ class EmbeddingManager:
         embeddings, total_tokens = self.model.encode(texts)
         return embeddings, total_tokens
 
-    def add_embeddings(self, texts: List[str]):
+    def add_embeddings(self, chunk_data: ChunkMetadata):
         """Embed and add text chunks to FAISS vector store."""
-        embeddings, total_tokens = self.embed_chunks(texts)
-        self.index.add(embeddings)
-        self._save_vector_store()
-        print(f"Added {len(texts)} chunks to FAISS index. Used {total_tokens} tokens.")
+        # embeddings, total_tokens = self.embed_chunks(chunk_data.chunks)
+        # self.index.add(embeddings)
+        # self._save_vector_store()
+        # print(
+        #     f"Added {len(chunk_data.chunks)} chunks to FAISS index. Used {total_tokens} tokens."
+        # )
 
-        # put the raw text and index into the metadata
-        for chunk_text in texts:
-            metadata_record = self._construct_metadata(chunk_text)
-            self.metadata.append(metadata_record)
+        self._construct_metadata(chunk_data)
         self._save_metadata()
         print(
-            f"Added {len(texts)} chunks to metadata. Total number of chunks is {len(self.metadata)}"
+            f"Added {len(chunk_data.chunks)} chunks to metadata. Total number of chunks is {len(self.metadata)}"
         )
 
     def search(
@@ -159,9 +174,8 @@ class EmbeddingManager:
         "embed all chunks in the chunks_dir"
         for chunk_file in Path(chunks_dir).glob("*.json"):
             with open(chunk_file, "r", encoding="utf-8") as f:
-                chunk_data = json.load(f)
-                chunks = chunk_data.get("chunks", [])
-                self.add_embeddings(chunks)
+                chunk_data = ChunkMetadata(**json.load(f))
+                self.add_embeddings(chunk_data)
 
 
 if __name__ == "__main__":
