@@ -4,11 +4,11 @@ from pathlib import Path
 from google import genai
 from langchain.prompts import PromptTemplate
 
-from rag.config import AVAILABLE_EMBEDDING_MODELS, AVAILABLE_VISION_MODELS
+from rag.config import AVAILABLE_VISION_MODELS
 
 
-IMG_DESCRIPTION_PROMPT_PATH = "rag/prompts/vlm_img_description.md"
-SUMO_MAP_DESCRIPTION_PROMPT_PATH = "rag/prompts/vlm/sumo_map_description.md"
+IMG_DESCRIPTION_PROMPT_PATH = "rag/prompts/preproc/vlm_img_description.md"
+SUMO_MAP_DESCRIPTION_PROMPT_PATH = "rag/prompts/preproc/sumo_map_description.md"
 
 
 class BaseVisionModel(ABC):

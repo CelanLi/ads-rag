@@ -2,7 +2,7 @@ import os
 from pathlib import Path
 
 from rag.config import DEFAULT_VISION_MODEL
-from rag.vlm.vision_models import get_vision_model
+from rag.llm.vision_models import get_vision_model
 from utils.file_utils import export_json
 
 

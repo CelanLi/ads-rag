@@ -16,20 +16,27 @@ import numpy as np
 import json
 
 from rag.config import AVAILABLE_EMBEDDING_MODELS, DEFAULT_EMBEDDING_MODEL
-from rag.embeddings.models import get_embedding_model
+from rag.llm.embedding_models import get_embedding_model
 from utils.file_utils import export_json
 
+
 class EmbeddingManager:
-    def __init__(self,
-                 embedding_model: str = DEFAULT_EMBEDDING_MODEL,
-                 vector_store_dir: str = "data/vector_db/"):
+    def __init__(
+        self,
+        embedding_model: str = DEFAULT_EMBEDDING_MODEL,
+        vector_store_dir: str = "data/vector_db/",
+    ):
         """
         Initialize the embedding manager with a chosen model.
         """
         self.embedding_model = embedding_model
         self.vector_store_dir = Path(vector_store_dir)
-        self.vector_store_path = self.vector_store_dir / f"{embedding_model}_vector_store.index" # Each model gets its own index file
-        self.metadata_path = self.vector_store_dir / f"{embedding_model}_metadata.json" # Each model gets its own metadata file, includes the index and other attributes
+        self.vector_store_path = (
+            self.vector_store_dir / f"{embedding_model}_vector_store.index"
+        )  # Each model gets its own index file
+        self.metadata_path = (
+            self.vector_store_dir / f"{embedding_model}_metadata.json"
+        )  # Each model gets its own metadata file, includes the index and other attributes
 
         self.backend = AVAILABLE_EMBEDDING_MODELS[embedding_model]["backend"]
 
@@ -38,7 +45,9 @@ class EmbeddingManager:
         self._init_metadata()
 
         # assert the length of metadata and the number of chunks in the vector store are the same
-        assert len(self.metadata) == self.index.ntotal, f"The length of metadata and the number of chunks in the vector store are not the same. Metadata length: {len(self.metadata)}, Vector store length: {self.index.ntotal}"
+        assert len(self.metadata) == self.index.ntotal, (
+            f"The length of metadata and the number of chunks in the vector store are not the same. Metadata length: {len(self.metadata)}, Vector store length: {self.index.ntotal}"
+        )
 
     def _init_model(self):
         """Initialize embedding model according to backend."""
@@ -51,13 +60,19 @@ class EmbeddingManager:
         if self.vector_store_path.exists():
             try:
                 self.index = faiss.read_index(str(self.vector_store_path))
-                print(f"Loaded existing FAISS index from {self.vector_store_path} for {self.embedding_model}")
+                print(
+                    f"Loaded existing FAISS index from {self.vector_store_path} for {self.embedding_model}"
+                )
             except Exception as e:
-                logging.warning(f"Failed to load existing FAISS index: {e}. Creating a new one for {self.embedding_model}.")
+                logging.warning(
+                    f"Failed to load existing FAISS index: {e}. Creating a new one for {self.embedding_model}."
+                )
                 self.index = faiss.IndexFlatL2(self.vector_dim)
         else:
             self.index = faiss.IndexFlatL2(self.vector_dim)
-            print(f"Created new FAISS index with dimension {self.vector_dim} for {self.embedding_model}")
+            print(
+                f"Created new FAISS index with dimension {self.vector_dim} for {self.embedding_model}"
+            )
 
     def _init_metadata(self):
         """Initialize metadata for the vector store."""
@@ -65,9 +80,13 @@ class EmbeddingManager:
             try:
                 with open(self.metadata_path, "r", encoding="utf-8") as f:
                     self.metadata = json.load(f)
-                    print(f"Loaded existing metadata, the total number of chunks is {len(self.metadata)}")
+                    print(
+                        f"Loaded existing metadata, the total number of chunks is {len(self.metadata)}"
+                    )
             except Exception as e:
-                logging.warning(f"Failed to load existing metadata: {e}. Creating a new one for {self.embedding_model}.")
+                logging.warning(
+                    f"Failed to load existing metadata: {e}. Creating a new one for {self.embedding_model}."
+                )
                 self.metadata = []
         else:
             self.metadata = []
@@ -82,13 +101,17 @@ class EmbeddingManager:
 
     def _save_metadata(self):
         """Save metadata to disk."""
-        export_json(output_dir=self.vector_store_dir, file_name=f"{self.embedding_model}_metadata", content=self.metadata)
-    
+        export_json(
+            output_dir=self.vector_store_dir,
+            file_name=f"{self.embedding_model}_metadata",
+            content=self.metadata,
+        )
+
     def _save_vector_store(self):
         """Persist FAISS index to disk."""
         index = faiss.write_index(self.index, str(self.vector_store_path))
         return index
-    
+
     def embed_chunks(self, text: str | List[str]) -> Tuple[np.ndarray, int]:
         """Generate embeddings for one or more text chunks."""
         if isinstance(text, str):
@@ -111,9 +134,13 @@ class EmbeddingManager:
             metadata_record = self._construct_metadata(chunk_text)
             self.metadata.append(metadata_record)
         self._save_metadata()
-        print(f"Added {len(texts)} chunks to metadata. Total number of chunks is {len(self.metadata)}")
+        print(
+            f"Added {len(texts)} chunks to metadata. Total number of chunks is {len(self.metadata)}"
+        )
 
-    def search(self, query: str | List[str], top_k: int = 3) -> Tuple[np.ndarray, np.ndarray, List[List[Dict]]]:
+    def search(
+        self, query: str | List[str], top_k: int = 3
+    ) -> Tuple[np.ndarray, np.ndarray, List[List[Dict]]]:
         """Search similar chunks for a given query."""
         if isinstance(query, str):
             query = [query]
