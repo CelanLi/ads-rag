@@ -22,6 +22,11 @@ class BaseVisionModel(ABC):
             raise FileNotFoundError(f"Prompt file not found: {prompt_path}")
         return path.read_text(encoding="utf-8")
 
+    def describe_img(
+        self, img_path: str, input_variables: dict, prompt_template_path: str
+    ) -> str:
+        pass
+
     def generate_img_description(
         self, img_path: str, prompt_path: str = IMG_DESCRIPTION_PROMPT_PATH
     ) -> str:
@@ -44,6 +49,11 @@ class OpenAI(BaseVisionModel):
         super().__init__(**kwargs)
         self.client = OpenAI(api_key=api_key)
         self.model_name = model_name
+
+    def describe_img(
+        self, img_path: str, input_variables: dict, prompt_template_path: str
+    ) -> str:
+        pass
 
     def generate_img_description(
         self, img_path: str, prompt_path: str = IMG_DESCRIPTION_PROMPT_PATH
@@ -81,11 +91,22 @@ class Gemini(BaseVisionModel):
         self.client = genai.Client(api_key=api_key)
         self.model_name = model_name
 
-    def generate_img_description(
-        self, img_path: str, prompt_path: str = IMG_DESCRIPTION_PROMPT_PATH
+    def describe_img(
+        self, img_path: str, input_variables: dict, prompt_template_path: str
     ) -> str:
-        prompt_template = self.load_prompt(prompt_path)
-        prompt = PromptTemplate(input_variables=[""], template=prompt_template).format()
+        """
+        Describe the image with the given input variables and prompt template.
+        Args:
+            img_path: The path to the image.
+            input_variables: The input variables for the prompt template, in the form of a dictionary, e.g. {"requirement": "xxx", "xml": "xxx"}
+            prompt_template_path: The path to the prompt template.
+        Returns:
+            The description of the image.
+        """
+        prompt_template = self.load_prompt(prompt_template_path)
+        prompt = PromptTemplate(
+            input_variables=list(input_variables.keys()), template=prompt_template
+        ).format(**input_variables)
 
         with open(img_path, "rb") as f:
             image_bytes = f.read()
@@ -101,6 +122,11 @@ class Gemini(BaseVisionModel):
             ],
         )
         return response.text
+
+    def generate_img_description(
+        self, img_path: str, prompt_path: str = IMG_DESCRIPTION_PROMPT_PATH
+    ) -> str:
+        return self.describe_img(img_path, {}, prompt_path=prompt_path)
 
     def generate_sumo_map_description(
         self,
@@ -108,27 +134,14 @@ class Gemini(BaseVisionModel):
         xml_path: str,
         prompt_path: str = SUMO_MAP_DESCRIPTION_PROMPT_PATH,
     ) -> str:
-        with open(img_path, "rb") as f:
-            image_bytes = f.read()
         with open(xml_path, "r", encoding="utf-8") as f:
             xml_content = f.read()
 
-        prompt_template = self.load_prompt(prompt_path)
-        prompt = PromptTemplate(
-            input_variables=["xml"], template=prompt_template
-        ).format(xml=xml_content)
-
-        response = self.client.models.generate_content(
-            model=self.model_name,
-            contents=[
-                genai.types.Part.from_bytes(
-                    data=image_bytes,
-                    mime_type="image/jpeg",
-                ),
-                prompt,
-            ],
+        return self.describe_img(
+            img_path=img_path,
+            input_variables={"xml": xml_content},
+            prompt_template_path=prompt_path,
         )
-        return response.text
 
     def generate_input_img_description(
         self,
@@ -136,25 +149,11 @@ class Gemini(BaseVisionModel):
         requirement: str,
         prompt_path: str = INPUT_IMG_DESCRIPTION_PROMPT_PATH,
     ) -> str:
-        with open(img_path, "rb") as f:
-            image_bytes = f.read()
-
-        prompt_template = self.load_prompt(prompt_path)
-        prompt = PromptTemplate(
-            input_variables=["requirement"], template=prompt_template
-        ).format(requirement=requirement)
-
-        response = self.client.models.generate_content(
-            model=self.model_name,
-            contents=[
-                genai.types.Part.from_bytes(
-                    data=image_bytes,
-                    mime_type="image/jpeg",
-                ),
-                prompt,
-            ],
+        return self.describe_img(
+            img_path=img_path,
+            input_variables={"requirement": requirement},
+            prompt_template_path=prompt_path,
         )
-        return response.text
 
 
 def get_vision_model(model_name: str) -> BaseVisionModel:
