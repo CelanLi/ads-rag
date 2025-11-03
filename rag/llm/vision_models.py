@@ -9,6 +9,7 @@ from rag.config import AVAILABLE_VISION_MODELS
 
 IMG_DESCRIPTION_PROMPT_PATH = "rag/prompts/preproc/vlm_img_description.md"
 SUMO_MAP_DESCRIPTION_PROMPT_PATH = "rag/prompts/preproc/sumo_map_description.md"
+INPUT_IMG_DESCRIPTION_PROMPT_PATH = "rag/prompts/input/vlm_img_description.md"
 
 
 class BaseVisionModel(ABC):
@@ -21,10 +22,20 @@ class BaseVisionModel(ABC):
             raise FileNotFoundError(f"Prompt file not found: {prompt_path}")
         return path.read_text(encoding="utf-8")
 
-    def generate_img_description(self, img_path: str) -> str:
+    def generate_img_description(
+        self, img_path: str, prompt_path: str = IMG_DESCRIPTION_PROMPT_PATH
+    ) -> str:
         pass
 
     def generate_sumo_map_description(self, img_path: str, xml_path: str) -> str:
+        pass
+
+    def generate_input_img_description(
+        self,
+        img_path: str,
+        requirement: str,
+        prompt_path: str = INPUT_IMG_DESCRIPTION_PROMPT_PATH,
+    ) -> str:
         pass
 
 
@@ -55,6 +66,11 @@ class OpenAI(BaseVisionModel):
         img_path: str,
         xml_path: str,
         prompt_path: str = SUMO_MAP_DESCRIPTION_PROMPT_PATH,
+    ) -> str:
+        pass
+
+    def generate_input_img_description(
+        self, img_path: str, prompt_path: str = INPUT_IMG_DESCRIPTION_PROMPT_PATH
     ) -> str:
         pass
 
@@ -101,6 +117,32 @@ class Gemini(BaseVisionModel):
         prompt = PromptTemplate(
             input_variables=["xml"], template=prompt_template
         ).format(xml=xml_content)
+
+        response = self.client.models.generate_content(
+            model=self.model_name,
+            contents=[
+                genai.types.Part.from_bytes(
+                    data=image_bytes,
+                    mime_type="image/jpeg",
+                ),
+                prompt,
+            ],
+        )
+        return response.text
+
+    def generate_input_img_description(
+        self,
+        img_path: str,
+        requirement: str,
+        prompt_path: str = INPUT_IMG_DESCRIPTION_PROMPT_PATH,
+    ) -> str:
+        with open(img_path, "rb") as f:
+            image_bytes = f.read()
+
+        prompt_template = self.load_prompt(prompt_path)
+        prompt = PromptTemplate(
+            input_variables=["requirement"], template=prompt_template
+        ).format(requirement=requirement)
 
         response = self.client.models.generate_content(
             model=self.model_name,
