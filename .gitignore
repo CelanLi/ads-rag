@@ -3,6 +3,7 @@ __pycache__/
 data/
 results/
 tests/
+rag/res/
 
 .env
 
