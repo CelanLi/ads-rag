@@ -14,7 +14,7 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
 # 1. embedding model
-DEFAULT_EMBEDDING_MODEL = "all-MiniLM-L6-v2"
+DEFAULT_EMBEDDING_MODEL = "gemini-embedding-001"
 AVAILABLE_EMBEDDING_MODELS = {
     "text-embedding-3-small": {
         "backend": "openai",
