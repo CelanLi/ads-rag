@@ -14,7 +14,7 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
 # 1. embedding model
-DEFAULT_EMBEDDING_MODEL = "Qwen3-Embedding-4B"
+DEFAULT_EMBEDDING_MODEL = "all-MiniLM-L6-v2"
 AVAILABLE_EMBEDDING_MODELS = {
     "text-embedding-3-small": {
         "backend": "openai",
@@ -43,15 +43,15 @@ AVAILABLE_EMBEDDING_MODELS = {
         "vector_dim": 2560,
     },  # qwen
     "all-MiniLM-L6-v2": {
-        "backend": "open_source",
+        "backend": "all-MiniLM-L6-v2",
         "api_key": None,
         "vector_dim": 384,
-    },  # open source
+    },
     "Linq-Embed-Mistral": {
-        "backend": "open_source",
+        "backend": "Linq-Embed-Mistral",
         "api_key": None,
         "vector_dim": 768,
-    },  # open source
+    },
 }
 
 # 2. LLM models

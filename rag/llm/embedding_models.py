@@ -146,6 +146,68 @@ class QwenEmbeddingModel(BaseEmbeddingModel):
         return self.model.encode(text, prompt_name="query")
 
 
+class AllMiniLML6V2EmbeddingModel(BaseEmbeddingModel):
+    def __init__(self, model_name: str = "all-MiniLM-L6-v2"):
+        from sentence_transformers import SentenceTransformer
+
+        self.model_name = model_name
+        self.model = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
+
+    def encode(self, texts: List[str]) -> Tuple[np.ndarray, int]:
+        if not texts:
+            # Return empty 2D array with correct shape for FAISS
+            return np.array([]).reshape(
+                0, self.model.get_sentence_embedding_dimension()
+            ), 0
+
+        embeddings = self.model.encode(texts)
+        # Ensure embeddings is 2D: (n_samples, embedding_dim)
+        if embeddings.ndim == 1:
+            embeddings = embeddings.reshape(1, -1)
+
+        # SentenceTransformer doesn't provide token count, return 0
+        total_tokens = 0
+        for text in texts:
+            total_tokens += len(text.split())
+        return embeddings, total_tokens
+
+    def encode_queries(self, text: str) -> np.ndarray:
+        if isinstance(text, str):
+            text = [text]
+        return self.model.encode(text, prompt_name="query")
+
+
+class LinqEmbedMistralEmbeddingModel(BaseEmbeddingModel):
+    def __init__(self, model_name: str = "Linq-Embed-Mistral"):
+        from sentence_transformers import SentenceTransformer
+
+        self.model_name = model_name
+        self.model = SentenceTransformer("Linq-AI-Research/Linq-Embed-Mistral")
+
+    def encode(self, texts: List[str]) -> Tuple[np.ndarray, int]:
+        if not texts:
+            # Return empty 2D array with correct shape for FAISS
+            return np.array([]).reshape(
+                0, self.model.get_sentence_embedding_dimension()
+            ), 0
+
+        embeddings = self.model.encode(texts)
+        # Ensure embeddings is 2D: (n_samples, embedding_dim)
+        if embeddings.ndim == 1:
+            embeddings = embeddings.reshape(1, -1)
+
+        # SentenceTransformer doesn't provide token count, return 0
+        total_tokens = 0
+        for text in texts:
+            total_tokens += len(text.split())
+        return embeddings, total_tokens
+
+    def encode_queries(self, text: str) -> np.ndarray:
+        if isinstance(text, str):
+            text = [text]
+        return self.model.encode(text, prompt_name="query")
+
+
 def get_embedding_model(name: str) -> BaseEmbeddingModel:
     backend = AVAILABLE_EMBEDDING_MODELS[name]["backend"]
     if backend == "openai":
@@ -154,5 +216,30 @@ def get_embedding_model(name: str) -> BaseEmbeddingModel:
         return GeminiEmbeddingModel()
     elif backend == "qwen":
         return QwenEmbeddingModel(model_name=name)
+    elif backend == "all-MiniLM-L6-v2":
+        return AllMiniLML6V2EmbeddingModel(model_name=name)
+    elif backend == "Linq-Embed-Mistral":
+        return LinqEmbedMistralEmbeddingModel(model_name=name)
     else:
         raise ValueError(f"Unknown embedding model: {name}")
+
+
+if __name__ == "__main__":
+    model = get_embedding_model("Linq-Embed-Mistral")
+    print(
+        model.encode(
+            [
+                "Hello, world!",
+                "Hello, universe!",
+                "Hello, galaxy!",
+                "The capital of France is Paris.",
+                "The capital of Germany is Berlin.",
+                "The capital of Italy is Rome.",
+                "The capital of Spain is Madrid.",
+                "The capital of Portugal is Lisbon.",
+                "The capital of Greece is Athens.",
+                "The capital of Turkey is Ankara.",
+            ]
+        )
+    )
+    print(model.encode_queries("Hello, world!"))
