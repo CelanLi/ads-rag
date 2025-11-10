@@ -3,7 +3,7 @@
 # This module is the LLM interface for the RAG system. It handle the query, retrieve the most similar chunks, and generate the response.
 # -----------------------------------
 
-from typing import List
+from typing import Dict, List
 from rag.app.input_processing.image_utils import ImageUtils
 from rag.config import DEFAULT_LLM_MODEL, DEFAULT_VISION_MODEL
 from rag.embeddings.embedding_manager import EmbeddingManager
@@ -15,7 +15,9 @@ from utils.file_utils import export_txt
 
 class LLMInterface:
     def __init__(
-        self, embedding_manager: EmbeddingManager, model_name: str = DEFAULT_LLM_MODEL
+        self,
+        embedding_manager: EmbeddingManager,
+        model_name: str = DEFAULT_LLM_MODEL,
     ):
         self.llm_model = get_llm_model(model_name)
         self.vlm = get_vision_model(model_name=DEFAULT_VISION_MODEL)
@@ -23,7 +25,9 @@ class LLMInterface:
         self.retriever = Retriever(embedding_manager)
         self.image_utils = ImageUtils(vlm=self.vlm)
 
-    def rag_qa(self, query: str | List[str]) -> str:
+    def rag_qa(
+        self, query: str | List[str], chat_history: List[Dict[str, str]] = None
+    ) -> str:
         # get context
         context = self.retriever.retrieve(query)
         # flatten the context
@@ -31,7 +35,9 @@ class LLMInterface:
         context = [metadata["text"] for metadata in context]
 
         # generate the response
-        response = self.llm_model.generate_rag_response(context, query)
+        response = self.llm_model.generate_rag_response(
+            context, query, chat_history=chat_history
+        )
         return response
 
     def ads_rag_gen(
