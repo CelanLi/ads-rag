@@ -14,7 +14,7 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
 # 1. embedding model
-DEFAULT_EMBEDDING_MODEL = "gemini-embedding-001"
+DEFAULT_EMBEDDING_MODEL = "Qwen3-Embedding-4B"
 AVAILABLE_EMBEDDING_MODELS = {
     "text-embedding-3-small": {
         "backend": "openai",
@@ -33,15 +33,15 @@ AVAILABLE_EMBEDDING_MODELS = {
         "batch_size": 100,
     },  # Google
     "Qwen3-Embedding-8B": {
-        "backend": "open_source",
+        "backend": "qwen",
         "api_key": None,
-        "vector_dim": 1024,
-    },  # open source
+        "vector_dim": 4096,
+    },  # qwen
     "Qwen3-Embedding-4B": {
-        "backend": "open_source",
+        "backend": "qwen",
         "api_key": None,
-        "vector_dim": 512,
-    },  # open source
+        "vector_dim": 2560,
+    },  # qwen
     "all-MiniLM-L6-v2": {
         "backend": "open_source",
         "api_key": None,

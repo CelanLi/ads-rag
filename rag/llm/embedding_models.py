@@ -115,12 +115,44 @@ class GeminiEmbeddingModel(BaseEmbeddingModel):
         return result
 
 
+class QwenEmbeddingModel(BaseEmbeddingModel):
+    def __init__(self, model_name: str, api_key: str = None):
+        from sentence_transformers import SentenceTransformer
+
+        self.model_name = model_name
+        self.model = SentenceTransformer(f"Qwen/{model_name}")
+
+    def encode(self, texts: List[str]) -> Tuple[np.ndarray, int]:
+        if not texts:
+            # Return empty 2D array with correct shape for FAISS
+            return np.array([]).reshape(
+                0, self.model.get_sentence_embedding_dimension()
+            ), 0
+
+        embeddings = self.model.encode(texts)
+        # Ensure embeddings is 2D: (n_samples, embedding_dim)
+        if embeddings.ndim == 1:
+            embeddings = embeddings.reshape(1, -1)
+
+        # SentenceTransformer doesn't provide token count, return 0
+        total_tokens = 0
+        for text in texts:
+            total_tokens += len(text.split())
+        return embeddings, total_tokens
+
+    def encode_queries(self, text: str) -> np.ndarray:
+        if isinstance(text, str):
+            text = [text]
+        return self.model.encode(text, prompt_name="query")
+
+
 def get_embedding_model(name: str) -> BaseEmbeddingModel:
-    name = name.lower()
     backend = AVAILABLE_EMBEDDING_MODELS[name]["backend"]
     if backend == "openai":
-        return OpenAIEmbeddingModel()
+        return OpenAIEmbeddingModel(model_name=name)
     elif backend == "gemini":
         return GeminiEmbeddingModel()
+    elif backend == "qwen":
+        return QwenEmbeddingModel(model_name=name)
     else:
         raise ValueError(f"Unknown embedding model: {name}")

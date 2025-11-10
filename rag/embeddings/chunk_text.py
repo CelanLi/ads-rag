@@ -18,14 +18,14 @@ class ChunkMetadata(BaseModel):
     filename: str
     chunks: List[str]
     src_path: List[str]
-    category: str
+    # category: str
 
     def model_dump(self) -> dict:
         return {
             "filename": self.filename,
             "chunks": self.chunks,
             "src_path": self.src_path,
-            "category": self.category,
+            # "category": self.category,
         }
 
 

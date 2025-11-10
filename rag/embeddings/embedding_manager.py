@@ -1,11 +1,7 @@
-# rag/embeddings/embedding_manager.py
 # -----------------------------------
 # This module loads chunked data,
 # generates embeddings using the selected model (e.g. OpenAI or SentenceTransformers),
 # and saves them into a vector store (e.g. FAISS, Chroma, or local file).
-#
-# usage:
-#     python -m rag.embeddings.embedding_manager
 # -----------------------------------
 
 import faiss
@@ -27,14 +23,14 @@ class EmbeddingMetadata(BaseModel):
     text: str
     src_path: List[str]
     index: int
-    category: str
+    # category: str
 
     def model_dump(self) -> dict:
         return {
             "text": self.text,
             "src_path": self.src_path,
             "index": self.index,
-            "category": self.category,
+            # "category": self.category,
         }
 
 
@@ -116,7 +112,7 @@ class EmbeddingManager:
                 text=chunk,
                 src_path=chunk_data.src_path,
                 index=len(self.metadata),
-                category=chunk_data.category,
+                # category=chunk_data.category,
             )
             self.metadata.append(chunk_data.model_dump())
 
@@ -183,6 +179,8 @@ class EmbeddingManager:
                 self.add_embeddings(chunk_data)
 
 
+# usage:
+#     python -m rag.embeddings.embedding_manager
 if __name__ == "__main__":
     embedding_manager = EmbeddingManager()
     # embedding_manager.add_embeddings(["Hello, world!", "Hello, universe!", "Hello, galaxy!", "The capital of France is Paris.", "The capital of Germany is Berlin.", "The capital of Italy is Rome.", "The capital of Spain is Madrid.", "The capital of Portugal is Lisbon.", "The capital of Greece is Athens.", "The capital of Turkey is Ankara."])
